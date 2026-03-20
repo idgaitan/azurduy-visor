@@ -139,14 +139,15 @@
 <div id="tab-ofrecimientos" class="tab-pane active">
   <div class="toolbar">
     <span style="font-size:.75rem;color:#64748b;font-weight:600">Filtrar:</span>
-    <button class="filter-btn active" data-estado="TODOS" onclick="setFiltro(this)">Todos</button>
-    <button class="filter-btn" data-estado="APERTURA"          onclick="setFiltro(this)">Apertura</button>
-    <button class="filter-btn" data-estado="EN_OFRECIMIENTO"   onclick="setFiltro(this)">En ofrecimiento</button>
-    <button class="filter-btn" data-estado="EN_ENTREVISTAS"    onclick="setFiltro(this)">En entrevistas</button>
-    <button class="filter-btn" data-estado="EN_ACEPTACION"     onclick="setFiltro(this)">En aceptación</button>
-    <button class="filter-btn" data-estado="CUBIERTO_SIN_TOMA" onclick="setFiltro(this)">Cubierto sin toma</button>
-    <button class="filter-btn" data-estado="DESIERTO"          onclick="setFiltro(this)">Desierto</button>
-    <button class="filter-btn" data-estado="FINALIZADO"        onclick="setFiltro(this)">Finalizado</button>
+    <button class="filter-btn active" data-estado="EN_CURSO"         onclick="setFiltro(this)">En curso</button>
+    <button class="filter-btn" data-estado="APERTURA"                onclick="setFiltro(this)">Apertura</button>
+    <button class="filter-btn" data-estado="EN_OFRECIMIENTO"         onclick="setFiltro(this)">En ofrecimiento</button>
+    <button class="filter-btn" data-estado="EN_ENTREVISTAS"          onclick="setFiltro(this)">En entrevistas</button>
+    <button class="filter-btn" data-estado="EN_ACEPTACION"           onclick="setFiltro(this)">En aceptación</button>
+    <button class="filter-btn" data-estado="CUBIERTO_SIN_TOMA"       onclick="setFiltro(this)">Cubierto sin toma</button>
+    <button class="filter-btn" data-estado="DESIERTO"                onclick="setFiltro(this)">Desierto</button>
+    <button class="filter-btn" data-estado="FINALIZADO"              onclick="setFiltro(this)">Finalizado</button>
+    <button class="filter-btn" data-estado="TODOS"                   onclick="setFiltro(this)">Todos</button>
   </div>
   <main>
     <div class="stats" id="stats"></div>
@@ -196,7 +197,12 @@
 <script>
   const CSV_URL = './ofrecimientos.csv';
   let allRows = [];
-  let filtroActivo = 'TODOS';
+  let filtroActivo = 'EN_CURSO';
+
+  const ESTADOS_EN_CURSO = new Set([
+    'APERTURA','EN_OFRECIMIENTO','EN_ENTREVISTAS',
+    'EN_ACEPTACION','CUBIERTO_SIN_TOMA','DESIERTO'
+  ]);
 
   const ESTADO_LABEL = {
     APERTURA:          'Apertura',
@@ -254,16 +260,23 @@
   function renderStats() {
     const counts = {};
     allRows.forEach(r => { counts[r.estado] = (counts[r.estado] || 0) + 1; });
-    const order = ['APERTURA','EN_OFRECIMIENTO','EN_ENTREVISTAS','EN_ACEPTACION','CUBIERTO_SIN_TOMA','DESIERTO','FINALIZADO'];
-    const html = `<div class="stat-card"><div class="stat-card__n">${allRows.length}</div><div class="stat-card__l">Total</div></div>` +
+    const enCurso = allRows.filter(r => ESTADOS_EN_CURSO.has(r.estado)).length;
+    const order = ['APERTURA','EN_OFRECIMIENTO','EN_ENTREVISTAS','EN_ACEPTACION','CUBIERTO_SIN_TOMA','DESIERTO'];
+    const html =
+      `<div class="stat-card"><div class="stat-card__n">${enCurso}</div><div class="stat-card__l">En curso</div></div>` +
       order.filter(e => counts[e]).map(e =>
         `<div class="stat-card"><div class="stat-card__n">${counts[e]}</div><div class="stat-card__l">${ESTADO_LABEL[e]||e}</div></div>`
-      ).join('');
+      ).join('') +
+      (counts['FINALIZADO'] ? `<div class="stat-card" style="opacity:.55"><div class="stat-card__n">${counts['FINALIZADO']}</div><div class="stat-card__l">Finalizado</div></div>` : '');
     document.getElementById('stats').innerHTML = html;
   }
 
   function renderTable() {
-    const rows = filtroActivo === 'TODOS' ? allRows : allRows.filter(r => r.estado === filtroActivo);
+    const rows = filtroActivo === 'TODOS'
+      ? allRows
+      : filtroActivo === 'EN_CURSO'
+        ? allRows.filter(r => ESTADOS_EN_CURSO.has(r.estado))
+        : allRows.filter(r => r.estado === filtroActivo);
     const tbody = document.getElementById('tbody');
     const wrap  = document.getElementById('table-wrap');
     const empty = document.getElementById('empty');
