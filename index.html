@@ -1,158 +1,313 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visor — AZURDUY</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visor Institucional — EES N° 1 Azurduy</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --header-bg: #0f172a;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --text-dim: #94a3b8;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f1f5f9; color: #1e293b; font-size: 14px; line-height: 1.5;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
     }
+
+    /* ── OVERLAY DE ACCESO ── */
+    #access-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: #0f172a;
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #access-overlay.visible { display: flex; }
+
+    .access-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.35);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+      margin: 1rem;
+    }
+    .access-logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .access-logo .esc-nombre {
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .access-logo .esc-titulo {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--header-bg);
+      letter-spacing: -.02em;
+      margin-top: .25rem;
+    }
+    .access-card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .field-label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: .35rem;
+    }
+    .field-input {
+      width: 100%;
+      padding: .65rem .85rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: .95rem;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .btn-acceder {
+      width: 100%;
+      margin-top: 1.1rem;
+      padding: .72rem 1rem;
+      background: #1d4ed8;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-acceder:hover { background: #1e40af; }
+    .access-error {
+      margin-top: .85rem;
+      padding: .55rem .8rem;
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: var(--radius);
+      font-size: .82rem;
+      display: none;
+    }
+    .access-error.visible { display: block; }
+
+    /* ── HEADER ── */
     header {
-      background: #0f172a; color: #fff; padding: 18px 24px;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      flex-wrap: wrap;
+      background: var(--header-bg);
+      color: #f8fafc;
+      padding: 0 1.5rem;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
     }
-    header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: .04em; }
-    header .sub { font-size: .75rem; color: #94a3b8; margin-top: 2px; }
-    #last-updated { font-size: .72rem; color: #64748b; white-space: nowrap; }
+    .h-left .h-sub {
+      font-size: .68rem; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: .07em; font-weight: 500;
+    }
+    .h-left .h-title {
+      font-size: 1rem; font-weight: 700; letter-spacing: -.01em; margin-top: 1px;
+    }
+    .h-right { display: flex; align-items: center; gap: .65rem; flex-shrink: 0; }
+    #status-txt { font-size: .72rem; color: #64748b; white-space: nowrap; }
+    #status-txt.updating { color: #60a5fa; }
+    .btn-icon {
+      background: rgba(255,255,255,.1); border: none; color: #cbd5e1;
+      width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+      font-size: .95rem; display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .btn-icon:hover { background: rgba(255,255,255,.18); color: #fff; }
+    .btn-salir {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      color: #94a3b8; padding: .28rem .75rem; border-radius: 6px;
+      font-size: .75rem; font-family: inherit; cursor: pointer;
+      transition: background .15s; white-space: nowrap;
+    }
+    .btn-salir:hover { background: rgba(255,255,255,.14); color: #e2e8f0; }
 
-    /* ── Tabs ── */
-    .tabs {
-      background: #fff; border-bottom: 1px solid #e2e8f0;
-      display: flex; gap: 0;
-    }
-    .tab-btn {
-      padding: 12px 22px; font-size: .82rem; font-weight: 600;
-      border: none; background: none; cursor: pointer; color: #64748b;
-      border-bottom: 2px solid transparent; transition: all .15s;
-      white-space: nowrap;
-    }
-    .tab-btn:hover { color: #0f172a; }
-    .tab-btn.active { color: #0f172a; border-bottom-color: #0f172a; }
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
+    /* ── MAIN ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
 
-    /* ── Toolbar ── */
-    .toolbar {
-      padding: 14px 24px; display: flex; gap: 10px; align-items: center;
-      flex-wrap: wrap; background: #fff; border-bottom: 1px solid #e2e8f0;
+    /* ── STATS ── */
+    .stats { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1.2rem; }
+    .stat {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: .55rem .9rem;
+      display: flex; align-items: center; gap: .45rem;
+      box-shadow: var(--shadow);
     }
-    .filter-btn {
-      padding: 5px 14px; border-radius: 20px; border: 1px solid #cbd5e1;
-      background: #fff; color: #475569; font-size: .78rem; cursor: pointer;
-      transition: all .15s; font-weight: 500;
-    }
-    .filter-btn:hover { border-color: #94a3b8; }
-    .filter-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
-
-    main { padding: 20px 24px; }
-
-    .stats {
-      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px;
-    }
-    .stat-card {
-      background: #fff; border-radius: 8px; padding: 12px 18px;
-      border: 1px solid #e2e8f0; min-width: 130px;
-    }
-    .stat-card__n { font-size: 1.5rem; font-weight: 800; color: #0f172a; }
-    .stat-card__l { font-size: .7rem; color: #64748b; font-weight: 600;
+    .stat.primary { border-color: #cbd5e1; }
+    .stat.dim { opacity: .55; }
+    .stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .stat-n { font-size: 1.15rem; font-weight: 800; color: var(--header-bg); line-height: 1; }
+    .stat-l { font-size: .7rem; font-weight: 600; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: .05em; }
 
-    .table-wrap { background: #fff; border-radius: 8px;
-      border: 1px solid #e2e8f0; overflow: hidden; }
+    /* ── FILTROS ── */
+    .filtros { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1rem; }
+    .pill {
+      padding: .35rem .95rem; border-radius: 999px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text-muted); font-size: .76rem;
+      font-weight: 500; cursor: pointer; font-family: inherit;
+      transition: all .12s;
+    }
+    .pill:hover { border-color: #94a3b8; color: var(--text); }
+    .pill.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+    /* ── TABLA ── */
+    .tabla-card {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow);
+    }
+    .tabla-header {
+      padding: .75rem 1rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .tabla-header h2 { font-size: .85rem; font-weight: 700; color: var(--text); }
+    .tabla-header .count { font-size: .75rem; color: var(--text-muted); }
+    .tabla-scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: .82rem; }
     thead th {
-      background: #0f172a; color: #fff; padding: 9px 14px; text-align: left;
-      font-weight: 600; font-size: .72rem; letter-spacing: .05em;
-      text-transform: uppercase; white-space: nowrap;
+      background: #0f172a; color: #fff; padding: .65rem .9rem;
+      text-align: left; font-size: .7rem; font-weight: 600;
+      letter-spacing: .05em; text-transform: uppercase; white-space: nowrap;
     }
     tbody tr { border-bottom: 1px solid #f1f5f9; }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: #f8fafc; }
-    td { padding: 10px 14px; vertical-align: middle; }
-    .td-acta { font-family: monospace; color: #64748b; font-size: .75rem; }
-    .td-espacio { font-weight: 600; color: #0f172a; }
-    .td-docente { color: #475569; }
-    .td-fecha { font-family: monospace; font-size: .75rem; color: #64748b; white-space: nowrap; }
-    .td-notas { color: #64748b; font-size: .75rem; max-width: 220px; }
+    td { padding: .7rem .9rem; vertical-align: middle; }
+    .td-acta { color: var(--text-muted); font-size: .78rem; white-space: nowrap; }
+    .td-espacio { font-weight: 500; max-width: 260px; }
+    .td-doc { max-width: 180px; color: var(--text-muted); }
+    .td-fecha { white-space: nowrap; font-size: .78rem; color: var(--text-muted); }
+    .td-notas { max-width: 180px; font-size: .78rem; color: var(--text-muted); }
+    .notas-clip {
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .dash { color: var(--text-dim); }
 
+    .empty {
+      text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);
+    }
+    .empty .empty-ico { font-size: 1.8rem; margin-bottom: .4rem; }
+
+    /* ── BADGE ESTADO ── */
     .badge {
-      display: inline-block; padding: 3px 10px; border-radius: 20px;
-      font-size: .7rem; font-weight: 700; letter-spacing: .04em;
-      white-space: nowrap;
+      display: inline-block; padding: .2rem .55rem; border-radius: 999px;
+      font-size: .7rem; font-weight: 700; white-space: nowrap;
     }
-    .b-APERTURA          { background:#dbeafe; color:#1d4ed8; }
-    .b-EN_OFRECIMIENTO   { background:#fef9c3; color:#854d0e; }
-    .b-EN_ENTREVISTAS    { background:#ffedd5; color:#9a3412; }
-    .b-EN_ACEPTACION     { background:#ede9fe; color:#5b21b6; }
-    .b-CUBIERTO_SIN_TOMA { background:#dcfce7; color:#166534; }
-    .b-FINALIZADO        { background:#e2e8f0; color:#334155; }
-    .b-DESIERTO          { background:#fee2e2; color:#991b1b; }
-    .b-default           { background:#f1f5f9; color:#475569; }
 
-    #empty { text-align:center; padding:40px; color:#94a3b8; display:none; }
-    #loading { text-align:center; padding:40px; color:#64748b; }
-
-    /* ── Próximamente ── */
-    .proxim-wrap {
-      padding: 60px 24px; text-align: center;
+    /* ── ÚLTIMOS CERRADOS ── */
+    .cerrados { margin-top: 1.75rem; }
+    .cerrados-head {
+      display: flex; align-items: center; gap: .5rem; margin-bottom: .7rem;
     }
-    .proxim-badge {
-      display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0;
-      border-radius: 8px; padding: 32px 48px;
+    .cerrados-head h3 {
+      font-size: .75rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
     }
-    .proxim-badge__icon { font-size: 2.5rem; margin-bottom: 12px; }
-    .proxim-badge__title { font-size: 1rem; font-weight: 700; color: #334155; }
-    .proxim-badge__sub { font-size: .82rem; color: #94a3b8; margin-top: 6px; }
+    .cerrados-head .linea { flex: 1; height: 1px; background: var(--border); }
+    .cerrados-cards { display: flex; flex-wrap: wrap; gap: .6rem; }
+    .cc {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: .7rem .9rem;
+      flex: 1; min-width: 180px; max-width: 340px; box-shadow: var(--shadow);
+    }
+    .cc-esp {
+      font-size: .85rem; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: .3rem;
+    }
+    .cc-meta { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+    .cc-doc { font-size: .76rem; color: var(--text-muted); }
+    .cc-fecha { font-size: .73rem; color: var(--text-dim); margin-left: auto; }
 
-    @media (max-width: 600px) {
-      main { padding: 12px; }
-      .stats { gap: 8px; }
-      .stat-card { min-width: 100px; padding: 10px 14px; }
-      thead th:nth-child(n+5) { display: none; }
-      td:nth-child(n+5) { display: none; }
-      .tab-btn { padding: 10px 14px; font-size: .75rem; }
+    @media (max-width: 680px) {
+      .col-toma, .col-notas { display: none; }
+      .h-left .h-sub, #status-txt { display: none; }
+      main { padding: 1rem .75rem 2rem; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <div>
-    <div class="sub">ESCUELA DE EDUCACIÓN SECUNDARIA N° 1 — AZURDUY</div>
-    <h1>Visor institucional</h1>
+<!-- OVERLAY DE ACCESO -->
+<div id="access-overlay" role="dialog" aria-modal="true">
+  <div class="access-card">
+    <div class="access-logo">
+      <div class="esc-nombre">EES N° 1 · Tierra del Fuego</div>
+      <div class="esc-titulo">Juana Azurduy</div>
+    </div>
+    <h2>Clave de acceso institucional</h2>
+    <label class="field-label" for="inp-clave">Clave</label>
+    <input type="password" id="inp-clave" class="field-input"
+           placeholder="••••••••••••" autocomplete="current-password" />
+    <button class="btn-acceder" id="btn-acceder" type="button">Ingresar</button>
+    <div class="access-error" id="access-error">Clave incorrecta. Consultá a la secretaría.</div>
   </div>
-  <div id="last-updated">Cargando…</div>
-</header>
-
-<!-- Tabs -->
-<div class="tabs">
-  <button class="tab-btn active" data-tab="tab-ofrecimientos" onclick="switchTab(this)">Ofrecimientos</button>
-  <button class="tab-btn" data-tab="tab-ausencias-dia" onclick="switchTab(this)">Ausencias del día</button>
-  <button class="tab-btn" data-tab="tab-ausencias-semana" onclick="switchTab(this)">Por semana</button>
 </div>
 
-<!-- Tab: Ofrecimientos -->
-<div id="tab-ofrecimientos" class="tab-pane active">
-  <div class="toolbar">
-    <span style="font-size:.75rem;color:#64748b;font-weight:600">Filtrar:</span>
-    <button class="filter-btn active" data-estado="EN_CURSO"         onclick="setFiltro(this)">En curso</button>
-    <button class="filter-btn" data-estado="APERTURA"                onclick="setFiltro(this)">Apertura</button>
-    <button class="filter-btn" data-estado="EN_OFRECIMIENTO"         onclick="setFiltro(this)">En ofrecimiento</button>
-    <button class="filter-btn" data-estado="EN_ENTREVISTAS"          onclick="setFiltro(this)">En entrevistas</button>
-    <button class="filter-btn" data-estado="EN_ACEPTACION"           onclick="setFiltro(this)">En aceptación</button>
-    <button class="filter-btn" data-estado="CUBIERTO_SIN_TOMA"       onclick="setFiltro(this)">Cubierto sin toma</button>
-    <button class="filter-btn" data-estado="DESIERTO"                onclick="setFiltro(this)">Desierto</button>
-    <button class="filter-btn" data-estado="FINALIZADO"              onclick="setFiltro(this)">Finalizado</button>
-    <button class="filter-btn" data-estado="TODOS"                   onclick="setFiltro(this)">Todos</button>
+<!-- HEADER -->
+<header>
+  <div class="h-left">
+    <div class="h-sub">Escuela de Educación Secundaria N° 1 — Azurduy</div>
+    <div class="h-title">Visor institucional</div>
   </div>
-  <main>
-    <div class="stats" id="stats"></div>
-    <div id="loading">Cargando ofrecimientos…</div>
-    <div class="table-wrap" id="table-wrap" style="display:none">
+  <div class="h-right">
+    <span id="status-txt"></span>
+    <button class="btn-icon" id="btn-refresh" title="Actualizar">&#x21BB;</button>
+    <button class="btn-salir" id="btn-salir" type="button">Cerrar sesión</button>
+  </div>
+</header>
+
+<!-- CONTENIDO -->
+<main id="main" style="display:none">
+
+  <div class="stats" id="stats"></div>
+
+  <div class="filtros" id="filtros"></div>
+
+  <div class="tabla-card">
+    <div class="tabla-header">
+      <h2 id="tabla-titulo">Ofrecimientos</h2>
+      <span class="count" id="tabla-count"></span>
+    </div>
+    <div class="tabla-scroll">
       <table>
         <thead>
           <tr>
@@ -160,152 +315,318 @@
             <th>Espacio / Cargo</th>
             <th>Estado</th>
             <th>Docente</th>
-            <th>Fecha acto</th>
-            <th>Toma</th>
-            <th>Notas</th>
+            <th class="col-toma">Toma efectiva</th>
+            <th class="col-notas">Notas</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
-    <div id="empty">No hay ofrecimientos para el filtro seleccionado.</div>
-  </main>
-</div>
-
-<!-- Tab: Ausencias del día -->
-<div id="tab-ausencias-dia" class="tab-pane">
-  <div class="proxim-wrap">
-    <div class="proxim-badge">
-      <div class="proxim-badge__icon">📅</div>
-      <div class="proxim-badge__title">Ausencias del día</div>
-      <div class="proxim-badge__sub">Próximamente — disponible cuando se integre<br>el módulo de ausencias cortas.</div>
-    </div>
   </div>
-</div>
 
-<!-- Tab: Por semana -->
-<div id="tab-ausencias-semana" class="tab-pane">
-  <div class="proxim-wrap">
-    <div class="proxim-badge">
-      <div class="proxim-badge__icon">📆</div>
-      <div class="proxim-badge__title">Ausencias por semana</div>
-      <div class="proxim-badge__sub">Próximamente — disponible cuando se integre<br>el módulo de ausencias cortas.</div>
+  <section class="cerrados" id="cerrados" style="display:none">
+    <div class="cerrados-head">
+      <h3>Últimos cerrados</h3>
+      <div class="linea"></div>
     </div>
-  </div>
-</div>
+    <div class="cerrados-cards" id="cerrados-cards"></div>
+  </section>
+
+</main>
 
 <script>
-  const CSV_URL = './ofrecimientos.csv';
-  let allRows = [];
-  let filtroActivo = 'EN_CURSO';
+  // ── CONFIG ────────────────────────────────────────────────────
+  var CSV_URL   = 'https://idgaitan.github.io/azurduy-visor/ofrecimientos.csv';
+  var AUTH_KEY  = 'visor_ok';
+  var CLAVE     = 'Juana29092026';
 
-  const ESTADOS_EN_CURSO = new Set([
-    'APERTURA','EN_OFRECIMIENTO','EN_ENTREVISTAS',
-    'EN_ACEPTACION','CUBIERTO_SIN_TOMA','DESIERTO'
-  ]);
-
-  const ESTADO_LABEL = {
-    APERTURA:          'Apertura',
-    EN_OFRECIMIENTO:   'En ofrecimiento',
-    EN_ENTREVISTAS:    'En entrevistas',
-    EN_ACEPTACION:     'En aceptación',
-    CUBIERTO_SIN_TOMA: 'Cubierto sin toma',
-    FINALIZADO:        'Finalizado',
-    DESIERTO:          'Desierto',
+  // ── ESTADOS ──────────────────────────────────────────────────
+  var EST = {
+    APERTURA:          { l: 'Apertura',          bg: '#dbeafe', c: '#1d4ed8', d: '#3b82f6' },
+    EN_OFRECIMIENTO:   { l: 'En ofrecimiento',   bg: '#fef9c3', c: '#854d0e', d: '#eab308' },
+    EN_ENTREVISTAS:    { l: 'En entrevistas',     bg: '#ffedd5', c: '#9a3412', d: '#f97316' },
+    EN_ACEPTACION:     { l: 'En aceptación',      bg: '#ede9fe', c: '#5b21b6', d: '#8b5cf6' },
+    CUBIERTO_SIN_TOMA: { l: 'Cubierto sin toma', bg: '#dcfce7', c: '#166534', d: '#22c55e' },
+    FINALIZADO:        { l: 'Finalizado',         bg: '#e2e8f0', c: '#334155', d: '#94a3b8' },
+    DESIERTO:          { l: 'Desierto',           bg: '#fee2e2', c: '#991b1b', d: '#ef4444' },
   };
+  var ACTIVOS  = ['APERTURA','EN_OFRECIMIENTO','EN_ENTREVISTAS','EN_ACEPTACION','CUBIERTO_SIN_TOMA'];
+  var CERRADOS = ['FINALIZADO','DESIERTO'];
+  var FILTROS  = [
+    { k: 'en_curso', l: 'En curso' },
+    { k: 'APERTURA', l: 'Apertura' },
+    { k: 'EN_OFRECIMIENTO',   l: 'En ofrecimiento' },
+    { k: 'EN_ENTREVISTAS',    l: 'En entrevistas' },
+    { k: 'EN_ACEPTACION',     l: 'En aceptación' },
+    { k: 'CUBIERTO_SIN_TOMA', l: 'Cubierto sin toma' },
+    { k: 'DESIERTO',          l: 'Desierto' },
+    { k: 'todos',             l: 'Todos' },
+  ];
 
-  function switchTab(btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
+  // ── ESTADO ───────────────────────────────────────────────────
+  var rows   = [];
+  var filtro = 'en_curso';
+
+  // ── DOM ───────────────────────────────────────────────────────
+  var overlay     = document.getElementById('access-overlay');
+  var inpClave    = document.getElementById('inp-clave');
+  var btnAcceder  = document.getElementById('btn-acceder');
+  var accError    = document.getElementById('access-error');
+  var mainEl      = document.getElementById('main');
+  var statusTxt   = document.getElementById('status-txt');
+  var btnRefresh  = document.getElementById('btn-refresh');
+  var btnSalir    = document.getElementById('btn-salir');
+  var statsEl     = document.getElementById('stats');
+  var filtrosEl   = document.getElementById('filtros');
+  var tbodyEl     = document.getElementById('tbody');
+  var tablaTitulo = document.getElementById('tabla-titulo');
+  var tablaCount  = document.getElementById('tabla-count');
+  var cerradosEl  = document.getElementById('cerrados');
+  var cerradosCards = document.getElementById('cerrados-cards');
+
+  // ── AUTH ─────────────────────────────────────────────────────
+  function autenticado() { return sessionStorage.getItem(AUTH_KEY) === '1'; }
+  function setAuth()     { sessionStorage.setItem(AUTH_KEY, '1'); }
+  function clearAuth()   { sessionStorage.removeItem(AUTH_KEY); }
+
+  function mostrarOverlay() {
+    overlay.classList.add('visible');
+    mainEl.style.display = 'none';
+    setTimeout(function() { inpClave.focus(); }, 80);
+  }
+  function ocultarOverlay() {
+    overlay.classList.remove('visible');
+    mainEl.style.display = 'block';
   }
 
-  async function loadCSV() {
-    try {
-      const res = await fetch(CSV_URL + '?t=' + Date.now());
-      if (!res.ok) throw new Error('No se pudo cargar el archivo');
-      const text = await res.text();
-      const lines = text.trim().split('\n');
-      const headers = parseCSVLine(lines[0]);
-      allRows = lines.slice(1).filter(l => l.trim()).map(l => {
-        const vals = parseCSVLine(l);
-        return Object.fromEntries(headers.map((h, i) => [h, vals[i] ?? '']));
+  function verificarClave() {
+    if (inpClave.value === CLAVE) {
+      accError.classList.remove('visible');
+      setAuth();
+      inpClave.value = '';
+      ocultarOverlay();
+      cargarCSV();
+    } else {
+      accError.classList.add('visible');
+      inpClave.select();
+    }
+  }
+
+  btnAcceder.addEventListener('click', verificarClave);
+  inpClave.addEventListener('keydown', function(e) { if (e.key === 'Enter') verificarClave(); });
+  btnSalir.addEventListener('click', function() { clearAuth(); rows = []; mostrarOverlay(); });
+  btnRefresh.addEventListener('click', cargarCSV);
+
+  // ── CSV ───────────────────────────────────────────────────────
+  function cargarCSV() {
+    setStatus('Actualizando…', true);
+    fetch(CSV_URL + '?t=' + Date.now())
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function(txt) {
+        rows = parsearCSV(txt).filter(function(r) { return r.estado !== 'ANULADO'; });
+        renderTodo();
+        var h = new Date().getHours(), m = new Date().getMinutes();
+        setStatus('Actualizado ' + pad(h) + ':' + pad(m), false);
+      })
+      .catch(function(e) {
+        setStatus('Error al cargar datos', false);
       });
-
-      const lastMod = res.headers.get('last-modified');
-      document.getElementById('last-updated').textContent =
-        'Actualizado: ' + (lastMod ? new Date(lastMod).toLocaleString('es-AR') : new Date().toLocaleDateString('es-AR'));
-
-      document.getElementById('loading').style.display = 'none';
-      renderStats();
-      renderTable();
-    } catch (e) {
-      document.getElementById('loading').textContent = 'Error al cargar datos: ' + e.message;
-    }
   }
 
-  function parseCSVLine(line) {
-    const result = []; let cur = ''; let inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
-      else { cur += c; }
+  function parsearCSV(txt) {
+    var lines = txt.trim().split('\n');
+    if (lines.length < 2) return [];
+    var hdrs = parsearLinea(lines[0]);
+    var result = [];
+    for (var i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      var vals = parsearLinea(lines[i]);
+      var obj = {};
+      for (var j = 0; j < hdrs.length; j++) obj[hdrs[j]] = vals[j] || '';
+      result.push(obj);
     }
-    result.push(cur.trim());
     return result;
   }
 
+  function parsearLinea(line) {
+    var r = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { r.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    r.push(cur.trim());
+    return r;
+  }
+
+  function setStatus(msg, updating) {
+    statusTxt.textContent = msg;
+    statusTxt.className = updating ? 'updating' : '';
+  }
+
+  // ── RENDER ────────────────────────────────────────────────────
+  function renderTodo() {
+    renderStats();
+    renderFiltros();
+    renderTabla();
+    renderCerrados();
+  }
+
   function renderStats() {
-    const counts = {};
-    allRows.forEach(r => { counts[r.estado] = (counts[r.estado] || 0) + 1; });
-    const enCurso = allRows.filter(r => ESTADOS_EN_CURSO.has(r.estado)).length;
-    const order = ['APERTURA','EN_OFRECIMIENTO','EN_ENTREVISTAS','EN_ACEPTACION','CUBIERTO_SIN_TOMA','DESIERTO'];
-    const html =
-      `<div class="stat-card"><div class="stat-card__n">${enCurso}</div><div class="stat-card__l">En curso</div></div>` +
-      order.filter(e => counts[e]).map(e =>
-        `<div class="stat-card"><div class="stat-card__n">${counts[e]}</div><div class="stat-card__l">${ESTADO_LABEL[e]||e}</div></div>`
-      ).join('') +
-      (counts['FINALIZADO'] ? `<div class="stat-card" style="opacity:.55"><div class="stat-card__n">${counts['FINALIZADO']}</div><div class="stat-card__l">Finalizado</div></div>` : '');
-    document.getElementById('stats').innerHTML = html;
+    statsEl.innerHTML = '';
+    var activoCnt = rows.filter(function(r) { return ACTIVOS.indexOf(r.estado) !== -1; }).length;
+    var finCnt    = rows.filter(function(r) { return r.estado === 'FINALIZADO'; }).length;
+    var desCnt    = rows.filter(function(r) { return r.estado === 'DESIERTO';   }).length;
+
+    if (activoCnt > 0) agregarStat(activoCnt, 'En curso', null, true, false);
+    for (var i = 0; i < ACTIVOS.length; i++) {
+      var key = ACTIVOS[i];
+      var cnt = rows.filter(function(r) { return r.estado === key; }).length;
+      if (cnt > 0) agregarStat(cnt, EST[key].l, EST[key].d, false, false);
+    }
+    if (finCnt > 0) agregarStat(finCnt, 'Finalizado', EST.FINALIZADO.d, false, true);
+    if (desCnt > 0) agregarStat(desCnt, 'Desierto',   EST.DESIERTO.d,   false, true);
   }
 
-  function renderTable() {
-    const rows = filtroActivo === 'TODOS'
-      ? allRows
-      : filtroActivo === 'EN_CURSO'
-        ? allRows.filter(r => ESTADOS_EN_CURSO.has(r.estado))
-        : allRows.filter(r => r.estado === filtroActivo);
-    const tbody = document.getElementById('tbody');
-    const wrap  = document.getElementById('table-wrap');
-    const empty = document.getElementById('empty');
-    if (!rows.length) { wrap.style.display = 'none'; empty.style.display = 'block'; return; }
-    wrap.style.display = ''; empty.style.display = 'none';
-    tbody.innerHTML = rows.map(r => {
-      const badgeCls = 'b-' + (r.estado || 'default');
-      const actoFmt  = r.fecha ? r.fecha.slice(0,10).split('-').reverse().join('/') : (r.acto_publico ? `A.P. ${r.acto_publico}` : '—');
-      const tomaFmt  = r.fecha_toma ? r.fecha_toma.slice(0,10).split('-').reverse().join('/') : '—';
-      return `<tr>
-        <td class="td-acta">${r.acta_nro}/${r.llamado}</td>
-        <td class="td-espacio">${r.espacio_cargo}</td>
-        <td><span class="badge ${badgeCls}">${ESTADO_LABEL[r.estado] || r.estado || '—'}</span></td>
-        <td class="td-docente">${r.docente_acepto || '—'}</td>
-        <td class="td-fecha">${actoFmt}</td>
-        <td class="td-fecha">${tomaFmt}</td>
-        <td class="td-notas">${r.notas || ''}</td>
-      </tr>`;
-    }).join('');
+  function agregarStat(n, lbl, dot, primary, dim) {
+    var d = document.createElement('div');
+    d.className = 'stat' + (primary ? ' primary' : '') + (dim ? ' dim' : '');
+    if (dot) {
+      var sp = document.createElement('span');
+      sp.className = 'stat-dot'; sp.style.background = dot;
+      d.appendChild(sp);
+    }
+    var nEl = document.createElement('span'); nEl.className = 'stat-n'; nEl.textContent = n;
+    var lEl = document.createElement('span'); lEl.className = 'stat-l'; lEl.textContent = lbl;
+    d.appendChild(nEl); d.appendChild(lEl);
+    statsEl.appendChild(d);
   }
 
-  function setFiltro(btn) {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    filtroActivo = btn.dataset.estado;
-    renderTable();
+  function renderFiltros() {
+    filtrosEl.innerHTML = '';
+    for (var i = 0; i < FILTROS.length; i++) {
+      (function(f) {
+        var b = document.createElement('button');
+        b.className = 'pill' + (filtro === f.k ? ' active' : '');
+        b.textContent = f.l;
+        b.addEventListener('click', function() {
+          filtro = f.k; renderFiltros(); renderTabla();
+        });
+        filtrosEl.appendChild(b);
+      })(FILTROS[i]);
+    }
   }
 
-  loadCSV();
+  function renderTabla() {
+    var filt = filtrar(rows, filtro);
+    var lbl = '';
+    for (var i = 0; i < FILTROS.length; i++) { if (FILTROS[i].k === filtro) { lbl = FILTROS[i].l; break; } }
+    tablaTitulo.textContent = lbl ? 'Ofrecimientos — ' + lbl : 'Ofrecimientos';
+    tablaCount.textContent  = filt.length + ' registro' + (filt.length !== 1 ? 's' : '');
+
+    tbodyEl.innerHTML = '';
+    if (!filt.length) {
+      var tr = document.createElement('tr');
+      var td = document.createElement('td'); td.colSpan = 6;
+      td.innerHTML = '<div class="empty"><div class="empty-ico">📋</div><p>Sin registros para este filtro.</p></div>';
+      tr.appendChild(td); tbodyEl.appendChild(tr);
+      return;
+    }
+    for (var j = 0; j < filt.length; j++) tbodyEl.appendChild(hacerFila(filt[j]));
+  }
+
+  function filtrar(rs, k) {
+    if (k === 'todos')    return rs;
+    if (k === 'en_curso') return rs.filter(function(r) { return ACTIVOS.indexOf(r.estado) !== -1; });
+    return rs.filter(function(r) { return r.estado === k; });
+  }
+
+  function hacerFila(r) {
+    var tr = document.createElement('tr');
+
+    // Acta / llamado
+    var tdA = document.createElement('td'); tdA.className = 'td-acta';
+    tdA.innerHTML = esc(r.acta_nro || '—') +
+      (r.llamado ? '<br><span style="font-size:.72rem;color:#94a3b8">Llam. ' + esc(r.llamado) + '</span>' : '');
+    tr.appendChild(tdA);
+
+    // Espacio
+    var tdE = document.createElement('td'); tdE.className = 'td-espacio';
+    tdE.textContent = r.espacio_cargo || '—';
+    tr.appendChild(tdE);
+
+    // Estado
+    var tdS = document.createElement('td');
+    var info = EST[r.estado] || { l: r.estado, bg: '#f1f5f9', c: '#475569' };
+    tdS.innerHTML = '<span class="badge" style="background:' + info.bg + ';color:' + info.c + '">' + esc(info.l) + '</span>';
+    tr.appendChild(tdS);
+
+    // Docente
+    var tdD = document.createElement('td'); tdD.className = 'td-doc';
+    tdD.innerHTML = r.docente_acepto ? esc(r.docente_acepto) : '<span class="dash">—</span>';
+    tr.appendChild(tdD);
+
+    // Toma efectiva
+    var tdT = document.createElement('td'); tdT.className = 'td-fecha col-toma';
+    var toma = fmtFecha(r.fecha_toma);
+    tdT.innerHTML = toma ? esc(toma) : '<span class="dash">—</span>';
+    tr.appendChild(tdT);
+
+    // Notas
+    var tdN = document.createElement('td'); tdN.className = 'td-notas col-notas';
+    if (r.notas) {
+      tdN.innerHTML = '<span class="notas-clip" title="' + esc(r.notas) + '">' + esc(r.notas) + '</span>';
+    } else {
+      tdN.innerHTML = '<span class="dash">—</span>';
+    }
+    tr.appendChild(tdN);
+
+    return tr;
+  }
+
+  function renderCerrados() {
+    // Los más recientes primero: el CSV viene ordenado por acta_nro asc, invertimos
+    var cerr = rows.filter(function(r) { return CERRADOS.indexOf(r.estado) !== -1; });
+    cerr = cerr.slice().reverse().slice(0, 3);   // últimos 3 por acta_nro desc
+    if (!cerr.length) { cerradosEl.style.display = 'none'; return; }
+    cerradosEl.style.display = 'block';
+    cerradosCards.innerHTML = '';
+    for (var i = 0; i < cerr.length; i++) {
+      var r = cerr[i];
+      var info = EST[r.estado] || { l: r.estado, bg: '#f1f5f9', c: '#475569' };
+      var fecha = r.estado === 'FINALIZADO' ? fmtFecha(r.fecha_toma) : fmtFecha(r.fecha);
+      var card = document.createElement('div'); card.className = 'cc';
+      card.innerHTML =
+        '<div class="cc-esp" title="' + esc(r.espacio_cargo || '') + '">' + esc(r.espacio_cargo || '—') + '</div>' +
+        '<div class="cc-meta">' +
+          '<span class="badge" style="background:' + info.bg + ';color:' + info.c + '">' + esc(info.l) + '</span>' +
+          '<span class="cc-doc">' + esc(r.docente_acepto || '—') + '</span>' +
+          (fecha ? '<span class="cc-fecha">' + esc(fecha) + '</span>' : '') +
+        '</div>';
+      cerradosCards.appendChild(card);
+    }
+  }
+
+  // ── UTILS ─────────────────────────────────────────────────────
+  function fmtFecha(s) {
+    if (!s) return '';
+    var p = s.slice(0,10).split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s;
+  }
+  function pad(n) { return String(n).padStart(2,'0'); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────
+  if (autenticado()) { ocultarOverlay(); cargarCSV(); }
+  else               { mostrarOverlay(); }
 </script>
 </body>
 </html>
